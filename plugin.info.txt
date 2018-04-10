@@ -1,7 +1,7 @@
-base   sqlquery
-author George Pirogov
-email  i1557@yandex.ru
-date   2016-11-25
-name   SQL query plugin
-desc   Processing query to mysql database and display results as a table.
-url    https://www.dokuwiki.org/plugin:sqlquery
+base   sqljson
+author George Pirogov & Marie Mandrela
+email  marie.h.mandrela@gmail.com
+date   2018-04-09
+name   SQL json plugin
+desc   Processing query to mysql database and insert results as a json.
+url    

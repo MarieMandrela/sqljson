@@ -1,4 +1,2 @@
-# sqlquery
-A dokuwiki plugin for processing query to MySQL databases and display results as a table.
-
-More information at https://www.dokuwiki.org/plugin:sqlquery
+# sqljson
+A dokuwiki plugin for processing query to MySQL databases and insert results as a json.

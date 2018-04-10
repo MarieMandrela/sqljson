@@ -1,15 +1,16 @@
 <?php
 /**
- * DokuWiki Plugin sqlquery (Syntax Component)
+ * DokuWiki Plugin sqljson (Syntax Component)
  *
  * @license GPL 2 http://www.gnu.org/licenses/gpl-2.0.html
  * @author  George Pirogov <i1557@yandex.ru>
+ * @author  Marie Mandrela <marie.h.mandrela@gmail.com>
  */
 
 // must be run within Dokuwiki
 if (!defined('DOKU_INC')) die();
 
-class syntax_plugin_sqlquery extends DokuWiki_Syntax_Plugin {
+class syntax_plugin_sqljson extends DokuWiki_Syntax_Plugin {
 
     public function getType() {
         return 'substition';
@@ -21,16 +22,16 @@ class syntax_plugin_sqlquery extends DokuWiki_Syntax_Plugin {
 
     public function connectTo($mode)
     {
-        $this->Lexer->addEntryPattern('<sql>', $mode, 'plugin_sqlquery');
+        $this->Lexer->addEntryPattern('<sqljson>', $mode, 'plugin_sqljson');
     }
 
     public function postConnect()
     {
-        $this->Lexer->addExitPattern('</sql>','plugin_sqlquery');
+        $this->Lexer->addExitPattern('</sqljson>','plugin_sqljson');
     }
 
     /**
-     * Handle matches of the sqlquery syntax
+     * Handle matches of the sqljson syntax
      *
      * @param string          $match   The match of the syntax
      * @param int             $state   The state of the handler
@@ -48,7 +49,7 @@ class syntax_plugin_sqlquery extends DokuWiki_Syntax_Plugin {
               break;
 
               case DOKU_LEXER_UNMATCHED:
-        			return array('sqlquery' => $match);
+        			return array('sqljson' => $match);
               break;
 
               case DOKU_LEXER_EXIT:
@@ -74,66 +75,83 @@ class syntax_plugin_sqlquery extends DokuWiki_Syntax_Plugin {
     {
         if ( $mode != 'xhtml' ) return false;
 
-        if ( !empty( $data['sqlquery'] ) )
+        if ( !empty( $data['sqljson'] ) )
         {
-            // получаем параметры конфигурации
+            // get the configuration parameters
             $host     = $this->getConf('Host');
             $DB       = $this->getConf('DB');
             $user     = $this->getConf('user');
             $password = $this->getConf('password');
 
-            // получаем запрос
-            $querystring = $data['sqlquery'];
+            // get a query
+            $querystring = $data['sqljson'];
 
-            // подключаемся к базе
+            // connect to the database
             $link = mysqli_connect($host, $user, $password, $DB);
             mysqli_set_charset($link, "utf8");
 
-            // подключились
+            // connected
             if ( $link )
             {
                 $result = mysqli_query($link, $querystring);
                 if ( $result )
                 {
-                    // получаем кол-во полей в таблице
+                    // get the number of fields in the table
                     $fieldcount = mysqli_num_fields($result);
+                    // get the number of rows in the table
+                    $rowcount = mysqli_num_rows($result);
 
-                    // строим таблицу
-                    $renderer->doc .= "<table id=\"sqlquerytable\" class=\"inline\">";
-
-                    // строим заголовок
-                    $renderer->doc .= "<thead><tr>";
+                    // open script tag
+                    $renderer->doc .= "<script>";
+                    
+                    // open json 
+                    $renderer->doc .= "var data = ["; 
+                    
+                    $header = array();
                     while ($fieldinfo = mysqli_fetch_field($result))
                     {
-                        $renderer->doc .= "<th>";
-                        $renderer->doc .= $fieldinfo->name;
-                        $renderer->doc .= "</th>";
+                        array_push($header, $fieldinfo->name);
                     }
-                    $renderer->doc .= "</tr></thead>";
 
-                    // строим содержимое таблицы
-                    $renderer->doc .= "<tbody>";
+                    // build the json entries
+                    $j = 0;
                     while ($row = mysqli_fetch_row($result))
                     {
-                          $renderer->doc .= "<tr>";
-
-                          // строим строку
-                          for ( $i = 0; $i < $fieldcount; $i++ )
+                          $renderer->doc .= "{ ";
+                          
+                          // construct a row
+                          for ( $i = 0; $i < $fieldcount; $i++ ) 
                           {
-                              $renderer->doc .= "<td>";
+                              if ( $i > 0 )
+                              {
+                                  $renderer->doc .= " , ";
+                              }
+                           
+                              $renderer->doc .= "\"";
+                              $renderer->doc .= $header[$i];
+                              $renderer->doc .= "\":\"";
                               $renderer->doc .= $row[$i];
-                              $renderer->doc .= "</td>";
+                              $renderer->doc .= "\"";
                           }
-                          $renderer->doc .= "</tr>";
-                    } // of while fetch_row
-                    // закрываем таблицу
-                    $renderer->doc .= "</tbody></table>";
-                } // of mysqli_query
+                          
+                          $renderer->doc .= " }";
+                          if ( $j < $rowcount - 1 )
+                          {
+                              $renderer->doc .= ",";
+                          }
+                          $j++;
+                    }
+                    // close json
+                    $renderer->doc .= "];";
+                    
+                    // close script tag
+                    $renderer->doc .= "</script>";
+                }
                 mysqli_close($link);
-            } // of mysqli link
-        } // of sqlquery not empty
+            }
+        }
         return true;
-    } // of render function
+    }
 }
 
 // vim:ts=4:sw=4:et:
