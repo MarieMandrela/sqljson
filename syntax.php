@@ -22,7 +22,7 @@ class syntax_plugin_sqljson extends DokuWiki_Syntax_Plugin {
 
     public function connectTo($mode)
     {
-        $this->Lexer->addEntryPattern('<sqljson>', $mode, 'plugin_sqljson');
+        $this->Lexer->addEntryPattern('<sqljson(?=.*?>)', $mode, 'plugin_sqljson');
     }
 
     public function postConnect()
@@ -41,24 +41,27 @@ class syntax_plugin_sqljson extends DokuWiki_Syntax_Plugin {
      */
     public function handle($match, $state, $pos, Doku_Handler $handler)
     {
-        switch ( $state )
-        {
-              case DOKU_LEXER_ENTER:
-              $data = array();
-              return $data;
-              break;
+        switch ($state) {
+            case DOKU_LEXER_ENTER:
+            $data = array();
+            return $data;
+            break;
+			
+            case DOKU_LEXER_UNMATCHED:
+            // will include everything from <sqljson ... to ... </sqljson >
+            // e.g. ... [name] > [sqljson]
+            list($attr, $content) = preg_split('/>/u',$match,2);
+            return array('sqljson' => $content, 'variable' => trim($attr));
+            break;
 
-              case DOKU_LEXER_UNMATCHED:
-        			return array('sqljson' => $match);
-              break;
-
-              case DOKU_LEXER_EXIT:
-              $data = array();
-              return $data;
-              break;
-
-        }
-
+			//return array($this->syntax, trim($lang), trim($title), $content);
+            
+            case DOKU_LEXER_EXIT:
+            $data = array();
+            return $data;
+            break;
+		}       
+		
         $data = array();
         return $data;
     }
@@ -105,7 +108,16 @@ class syntax_plugin_sqljson extends DokuWiki_Syntax_Plugin {
                     $renderer->doc .= "<script>";
                     
                     // open json 
-                    $renderer->doc .= "var data = ["; 
+                    if (strlen($data['variable']) > 0)
+                    {
+                        $renderer->doc .= "var ";
+                        $renderer->doc .= $data['variable'];
+                        $renderer->doc .= " = ["; 
+                    } 
+                    else 
+                    {
+                        $renderer->doc .= "var data = ["; 
+                    }
                     
                     $header = array();
                     while ($fieldinfo = mysqli_fetch_field($result))
