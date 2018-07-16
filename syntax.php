@@ -53,8 +53,6 @@ class syntax_plugin_sqljson extends DokuWiki_Syntax_Plugin {
             list($attr, $content) = preg_split('/>/u',$match,2);
             return array('sqljson' => $content, 'variable' => trim($attr));
             break;
-
-			//return array($this->syntax, trim($lang), trim($title), $content);
             
             case DOKU_LEXER_EXIT:
             $data = array();
