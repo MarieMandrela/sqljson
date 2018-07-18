@@ -1,7 +1,7 @@
 base   sqljson
 author George Pirogov & Marie Mandrela
 email  marie.h.mandrela@gmail.com
-date   2018-04-09
+date   2018-07-16
 name   SQL json plugin
 desc   Processing query to mysql database and insert results as a json.
 url    
